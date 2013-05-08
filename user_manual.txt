@@ -1,0 +1,204 @@
+Installing and Running MASC
+Description: This tutorial walks through the steps of installing and running MASC on the user and agent machines.  Additionally, steps are provided for use of all functions.
+
+Note: This tutorial assumes that you have completed the previous tutorial: 
+
+Running ROS across multiple machines
+http://www.ros.org/wiki/ROS/Tutorials/MultipleMachines
+
+Keywords: MASC, MAS, multi-agent, multi-robot, system
+
+Contents
+---------
+1. Prerequisites
+2. Installing MASC Code
+3. Writing the Configuration File
+4. Running MASC and Troubleshooting MASC with Examples
+
+
+
+This tutorial has 3 parts: Installing the software on the main computer and the agent machines, properly writing the configuration file, and running/troubleshooting MASC examples.
+
+
+
+1. Prerequisites
+-----------------
+MASC is written in C, and implements the ROS libraries (written in C++) using a socket interface and multiple parallel tasks. The following is required to run MASC:
+ROS Fuerte 
+Networking of independent machines by the noted tutorial listed above (Running ROS across multiple machines)
+Means for wireless communication
+
+
+
+2. Installing MASC code
+-----------------------
+2.1 Main
+
+All files in the “Main” directory should be copied to the machine from which the user will interface with the multi agent system. 
+
+2.2 Agent
+
+All files in the “Agent” directory should be copied to the machine from which the user will interface with the multi agent system. 
+
+This tutorial assumes the files are copied to a "ROS" subdirectory under the system's HOME directory (e.g. /<system>/HOME/ROS/*).
+
+See the manufacturer's documentation for file-transfer methods. RobotStudio Online and USB drives are often convenient methods to transfer files to the controller.
+
+
+
+3. Writing the Configuration File
+----------------------------------
+The MASC configuration file (type “config.txt”) provides the interface with the information that it needs to start the session.  Currently, group size is inflexible and so the user is responsible for providing the details of their session to the main MASC application.
+
+The configuration file is composed as follows:
+
+//number of robots
+n
+//associate robot type with program and driver info
+[type 1]-driver package-driver file-program.lang
+[type 2]-driver package-driver file-program.lang
+...
+[type m]-driver package-driver file-program.lang
+
+
+
+
+4. Running and Troubleshooting MASC with Examples
+-------------------------------------------------
+In this section, we discuss the types of interactions that the user may have with the team, i.e. what messages may be sent and the meaning of each.  As previously described, the user may utilize the MASC interface to initialize the team session, view status information for the team, or to issue messages of the following types to robots in the system:
+
+
+-Begin or End Program Execution
+-Update or Change Working Program
+-End Session
+
+   For each possible interaction, we will describe what actions must be performed by the user, the interface, and the message target(s) in order to fulfill the user's request.  Let it be noted that for each action described (aside from Initialization of Team Session), the user may select to address an individual robot, a group of like robots, or the system as a whole.
+
+4.1 Begin Session
+
+To begin, run the masc executable with the configuration file arguments:
+
+$rosrun paper masc config.txt 
+
+In separate processes or on different machines run the agent executables with id and node arguments:
+
+$rosrun paper agent 1 one
+
+The masc executable will present a system of menus which by which the user may interface with the system.
+
+When the user runs MASC from the command line, there are a number of requirements that must be met in order for the session to be properly configured.  
+
+A means for wireless communication over a secure network exists.
+ROS driver for each type of robot in use must be installed on the system.  
+ROS is running on the central machine and robots are networked to this instance.
+All robots have executable code to begin with.
+The user has prepared a configuration file identifying details about the session to be configured.  The file includes such information as the number of robots in the system and details for each group in the system (numerical identifier, driver package, driver name, initial program to run)
+
+   If all of the above prerequisites are satisfied, then the user may run the the application MASC from the command line with the configuration file as the only argument.
+   The MASC application behind the interface configures the system based on the configuration data received from the user.  If the initialization of the session is completed without error, the application will open the ROS topic to which it will publish all user messages.  For the remainder of the session, MASC will interpret the user’s commands and prepare usable messages to be delivered to the team.
+   The MASC application that runs on the robots will run once the system has been initialized.  They will subscribe to the topic and await messages from the user.  Now the user may interact with the team.
+
+4.2 View System Information
+
+Main menu:
+
+(info) - SYSTEM INFO
+(msg) - SEND MESSAGE
+(exit) - EXIT
+
+View status information for:
+
+(all) - SYSTEM
+(one) - EXIT
+
+System will prompt for agent ID if user wishes to address an individual agent.
+
+At any point during the team’s operation, the user is able to view status information for an individual robot, a group, or for the entire system.  Available system information includes Group/Robot handle, Type (includes particular ROS driver location and execution data), and the state of each requested agent.  Upon requesting status information, the user will be asked to specify which agent or agents it wishes to see information for.  The requested agent will be messaged internally by the interface application to ensure that it is still active in the system.  The requested agent plays no further role beyond confirmation of it’s existence.
+
+4.3 Update Agent Instructions
+
+Main menu:
+
+(info) - SYSTEM INFO
+(msg) - SEND MESSAGE
+(exit) - EXIT
+
+Send message to:
+
+(all) - SYSTEM
+(one) - EXIT
+
+System will prompt for agent ID if user wishes to address an individual agent.
+
+(start) - EXECUTE CODE
+(end) - STOP EXECUTION
+(new) - NOTIFY NEW PROGRAM
+
+(new) or (change) working program?
+
+*If new:
+
+FILE NAME (‘program.ext’): 
+
+Enter filename to write to: 
+
+
+*If change:
+
+Enter program name: 
+
+For a non-ROS executable, the executable must be entered here as “./program”.
+   One of the most challenging aspects of managing a large multi-robot team is the matter of loading new code to each and every robot.  This can be a costly and time consuming pursuit if each robot must be addressed individually.  MASC allows the user to modify each robot’s instructions quickly from a central location.  The user has the option to identify a different executable for the robot, or to send an entirely new program for the robot(s) to use.   
+   When the interface application understands the user’s intent to update instructions for some or all robots on the team, it will collect the necessary information from the user, generate a random port number by which the agents can connect, and then run a temporary server application which will transfer the name of a different executable or an entirely new file.  Once the transfer is completed, the server will close and the interface application will resume listening for new user messages.
+   When the robot receives the port number as a message from the interface application, it recognizes it as the update message type.  The agent code will launch client code which connects with the server using the received host information.  The client will receive its update, and compile the new instructions if necessary.  It is necessary here for the user to issue a command to run the new instructions. 
+
+4.4 Begin/End Program Execution
+Main menu:
+
+(info) - SYSTEM INFO
+(msg) - SEND MESSAGE
+(exit) - EXIT
+
+Send message to:
+
+(all) - SYSTEM
+(one) - EXIT
+
+System will prompt for agent ID if user wishes to address an individual agent.
+
+(start) - EXECUTE CODE
+(end) - STOP EXECUTION
+(new) - NOTIFY NEW PROGRAM
+
+
+Selecting start or stop here will initiate or terminate execution of the agent’s program.
+
+4.5 Exit
+When the user wishes to terminate the entire session, they issue the command to exit MASC.  The master code will first make a log of the last recorded state of the system, then it will relay the exit message to the system and upon returning will exit normally.  
+
+4.6 Error Messages
+The following section shows error messages that may display in the event of a problem that occurs during the session.  Many errors are handled internally, however this guide will help you to isolate a problem that can not be resolved without intervention.
+
+masc
+ERROR: Usage: masc [config file], exiting.
+Include configuration file of type “config.txt” as argument to 
+
+ERROR: Configuration file must be of type ‘.txt’, exiting.
+Ensure that name of configuration was entered correctly, with ‘.txt’ extension
+
+ERROR: Configuration file failed to open, exiting.
+Ensure that configuration file exists in working directory
+
+ERROR: Number of entries exceeds number of agents, please check config file.  Exiting.
+Increase number of agents in configuration file to match entries listed below
+
+[SERVER]: ERROR: File failed to open, returning
+Ensure that file to transfer exists in working directory
+
+
+agent
+ERROR: Usage: robo [id] [node]
+Ensure that [id] is int, and [node] begins with a character
+
+ERROR: [program] is not executable from here.  Check agent has required files.
+Ensure that program has been compiled in agent workspace
