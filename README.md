@@ -20,8 +20,13 @@ Quickstart:
 4.  Copy 'agent.cpp' and 'client.cpp' to any agent machine (or to main if testing on single machine)
 5.  Copy sample 'config.txt' to working directory.
 6.  To run main application:
+
+
       rosrun paper masc config.txt
+      
 7.  To run agent application(s):
+      
+
       rosrun paper agent [id] [node] [host IP]
 
       ex. rosrun paper agent 1 tomservo localhost
